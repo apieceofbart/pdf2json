@@ -39,13 +39,13 @@ let PDFParser = (function () {
 		this.emit("pdfParser_dataError", {"parserError": data});
 	};
 
-	let _startParsingPDF = function(buffer) {
+	let _startParsingPDF = function(password, buffer) {
 		this.data = {};
 
 		this.PDFJS.on("pdfjs_parseDataReady", _onPDFJSParseDataReady.bind(this));
 		this.PDFJS.on("pdfjs_parseDataError", _onPDFJSParserDataError.bind(this));
 
-		this.PDFJS.parsePDFData(buffer || _binBuffer[this.pdfFilePath + this.pdfFileMTime], _password);
+		this.PDFJS.parsePDFData(buffer || _binBuffer[this.pdfFilePath + this.pdfFileMTime], password);
 	};
 
 	let _processBinaryCache = function() {
@@ -67,7 +67,7 @@ let PDFParser = (function () {
 		return false;
 	};
 
-	let _processPDFContent = function(err, data) {
+	let _processPDFContent = function(password, err, data) {
 		nodeUtil.p2jinfo("Load PDF file status:" + (!!err ? "Error!" : "Success!") );
 		if (err) {
 			this.data = err;
@@ -75,7 +75,7 @@ let PDFParser = (function () {
 		}
 		else {
 			_binBuffer[this.pdfFilePath +  + this.pdfFileMTime] = data;
-			_startParsingPDF.call(this);
+			_startParsingPDF.call(this, password);
 		}
 	};
 
@@ -137,7 +137,7 @@ let PDFParser = (function () {
 		_password = password;
 	};
 
-	PdfParser.prototype.loadPDF = function(pdfFilePath, verbosity) {
+	PdfParser.prototype.loadPDF = function(pdfFilePath, verbosity, password) {
 		this.setVerbosity(verbosity);
 		nodeUtil.p2jinfo("about to load PDF file " + pdfFilePath);
 
@@ -150,7 +150,7 @@ let PDFParser = (function () {
 		if (_processBinaryCache.call(this))
 			return;
 
-		this.fq.push({path: pdfFilePath}, _processPDFContent.bind(this));
+		this.fq.push({path: pdfFilePath}, _processPDFContent.bind(this, password));
 	};
 
 	// Introduce a way to directly process buffers without the need to write it to a temporary file
